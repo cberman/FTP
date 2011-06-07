@@ -647,7 +647,7 @@
        public void mget(User p, String[] word) throws IOException
       {
          if(word.length==1)
-            p.output.writeUTF(word[0]+" requires a filename argument");
+            p.output.writeUTF(word[0]+" requires an argument");
          else
          {
             String regex="";
@@ -668,7 +668,7 @@
                case '?':
                   break;
                case '*':
-                  for(int s=i; s<regex.length(); s++)
+                  for(int s=i; s<name.length(); s++)
                      if(matches(regex.substring(i+1), name.substring(s)))
                         return true;
                   break;
@@ -752,7 +752,7 @@
          FTPServer server = new FTPServer();
          System.out.println("Server up and running");
          server.start();
-         // (new Client()).start();
+         (new Client()).start();
       }
    }
 	
