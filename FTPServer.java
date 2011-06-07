@@ -4,6 +4,7 @@
    import java.io.*;
    import javax.swing.*;
    import java.util.*;
+	import java.security.*;
 
     public class FTPServer extends Thread
    {   
@@ -658,6 +659,13 @@
                   sendFile(p, i, i.getName());
          }
       }
+		/**
+		* Used by <code> mget </code> to determine if
+		* a specific file should be sent.
+		
+		* @param regex The regular expression.
+		* @param name The name of the file
+		*/
        public boolean matches(String regex, String name)
       {
          for(int i=0; i<regex.length(); i++)
