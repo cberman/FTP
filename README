@@ -1,0 +1,91 @@
+WHAT IS THIS PROGRAM?
+---------------------
+
+This program is used to find transfer files over a network connection.
+It is similar to FTP (File Transfer Protocol), except I coded it 
+myself.  See http://en.wikipedia.org/wiki/Ftp for a basic understanding
+of what it is.
+
+
+FILE LIST
+---------
+
+readme.txt		This file.
+FTPClient.java		Java program for the server tool.
+FTPServer.java		Java program for the client tool.
+server.cfg		Configuration file for server options.
+Client.class		Class file used by Java
+FTPClient.class		Class file used by Java
+FTPServer.class		Class file used by Java
+MaskingThread.class	Class file used by Java
+PasswordField.Class	Class file used by Java
+User.class		Class file used by Java
+
+
+INSTRUCTIONS
+------------
+
+There are two tools included in this package: the client and the server.
+
+
+INSTRUCTIONS FOR THE CLIENT
+---------------------------
+
+
+COMMAND LINE ARGUMENTS
+----------------------
+
+-cdup		Moves to the parent directory.
+-cwd		Changes the working directory.
+-fget		Downloads an entire directory along with all its
+		subdirectories.  Uses a Stack.
+-flist		Lists the files in the specified directory.
+		If no directory is specified, the current one
+		is used.
+-dist		Lists the subdirectories of the specified directory.
+		If no directory is specified, the current one
+		is used.
+-list		Lists everything in the specified directory.
+		If no directory is specified, the current one
+		is used.  Uses a Queue.
+-mdtm		Returns the time the file was last modified in
+		milliseconds since the epoch.
+-mget		Retrieves multiple files.  Uses wildcards such as * and ?.
+-noop		Checks to make sure the server is responding.
+-pwd		Prints the working directory.
+-retr		Retrieves the specified file.
+-dele		Deletes a remote file.
+-size		Returns the size of the specified file or
+		directory.  Flags include -k, -m, and -g for
+		printing the size in different units.
+
+
+INSTRUCTIONS FOR THE SERVER
+---------------------------
+
+
+server.cfg
+----------
+
+
+
+POSSIBLE HARDWARE FAILURE
+-------------------------
+
+
+DISCLAIMER
+----------
+
+THIS PROGRAM AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
+ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
+PARTICULAR PURPOSE.
+
+
+THANKS
+------
+
+Happy file transfering and thanks for downloading,
+Collin Berman
+toemastah@gmail.com
+
