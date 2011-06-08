@@ -3,14 +3,14 @@
    import java.net.*;
    import java.io.*;
    import java.util.*;
-	import java.security.*;
+   import java.security.*;
 
    public class FTPClient implements Runnable 
    {
-		/**
-		* The place the connection between the client
-		* and server is made
-		*/
+   	/**
+   	* The place the connection between the client
+   	* and server is made
+   	*/
       private Socket connection;
    	/**
    	* <code> Stream </code> reading from the server
@@ -20,15 +20,23 @@
    	* <code> Stream </code> writing to the server
    	*/
       public DataOutputStream output;
-		/**
-		* <code> Thread </code> that continuously reads
-		* in from the server.
-		*/
+   	/**
+   	* <code> Thread </code> that continuously reads
+   	* in from the server.
+   	*/
       private Thread inputThread;
+   	/**
+   	* Generates SHA-1 checksums
+   	*/
+      public MessageDigest md;
+   	/**
+   	* Whether or not to use checksums
+   	*/
+      public boolean checksum;
      	
-		/**
-		* Instantiate various variables and start the client
-		*/
+   	/**
+   	* Instantiate various variables and start the client
+   	*/
       public static void main(String[] args) throws IOException
       {
          System.out.print("Connect to: ");
@@ -40,14 +48,14 @@
             catch(StringIndexOutOfBoundsException e){hostname=stuff;}
          (new FTPClient()).gogogo(hostname, port);
       }
-	/**
+   /**
    * Make connection to server and get associated streams.
    * Start separate thread to allow the client to
    * continually read input from the server.
-	
-	* @param host The address of the <code> FTPServer </code>
-	* @param port The port the server is being run on
-	*/
+   
+   * @param host The address of the <code> FTPServer </code>
+   * @param port The port the server is being run on
+   */
       public void gogogo(String host, int port) throws IOException
       {
          try {
@@ -92,10 +100,12 @@
                System.exit(0);
             }
          }
-      
+         checksum=input.readBoolean();
+         try{md=MessageDigest.getInstance("SHA-1");}
+            catch(NoSuchAlgorithmException e){e.printStackTrace();}
          inputThread = new Thread( this );
          inputThread.start();
-			//Writes to the server
+      	//Writes to the server
          while(true)
          {
             try{String request=scan.nextLine().trim();
@@ -122,13 +132,13 @@
                      System.out.print(text.substring(5)+"> ");
                   else if(text.substring(0, 6).equals("<FILE>"))	//file is being transfered
                      recieveFile(text);
-						else if(text.substring(0, 8).equals("<FOLDER>"))
-							 new File(text.substring(text.indexOf(">")+1)).mkdir();
+                  else if(text.substring(0, 8).equals("<FOLDER>"))
+                     new File(text.substring(text.indexOf(">")+1)).mkdir();
                   else
                      System.out.println(text);
                }
                   catch(StringIndexOutOfBoundsException e){System.out.println(text);}
-						catch(Exception e){e.printStackTrace();}
+                  catch(Exception e){e.printStackTrace();}
             }
                catch(SocketException e){
                   System.out.println("Server closed by host.");
@@ -142,28 +152,56 @@
             
          }
       }
-		/**
-		* Reads in file information from the server
-		* and stores it locally
-		
-		* @param text Filename and size of the file
-		*/
+   	/**
+   	* Reads in file information from the server
+   	* and stores it locally
+   	
+   	* @param text Filename and size of the file
+   	*/
       private void recieveFile(String text) throws IOException
       {
-         long start=System.currentTimeMillis();
+         long start=0;
          FileOutputStream fos=new FileOutputStream(text.substring(6, text.lastIndexOf(":")));
          BufferedOutputStream bos=new BufferedOutputStream(fos);
          byte[] array=new byte[Integer.parseInt(text.substring(text.lastIndexOf(":")+1))];
-         
          int length=array.length;
       	
-         input.readFully(array);
+         if(checksum)
+            while(true)
+            {
+               start=System.currentTimeMillis();
+               input.readFully(array);
+               byte[] mysha=md.digest(array);
+               byte[] serversha=new byte[20];
+               input.readFully(serversha);
+               boolean good=true;
+               for(int i=0; i<20; i++)
+                  if(mysha[i]!=serversha[i])
+                     good=false;
+               if(good)
+               {
+                  output.writeBoolean(true);
+                  break;
+               }
+               else
+               {
+                  output.writeBoolean(false);
+                  System.out.println("Bad checksum; re-sending file");
+               }
+            }
+         else
+         {
+            start=System.currentTimeMillis();
+            input.readFully(array);
+         }
+      	
          bos.write(array, 0, length);
          bos.flush();
+      	
          bos.close();
          long time = System.currentTimeMillis()-start;
-			if(time==0)
-				time=1;
+         if(time==0)
+            time=1;
          System.out.println(length+" bytes recieved in "+(time/1000.0)+" seconds ("+(length/time)+" Kbytes/s)");
       }
    	/**
@@ -189,14 +227,14 @@
 
    class MaskingThread extends Thread 
    {
-		/**
-		* Whether or not the console is being masked.
-		*/
+   	/**
+   	* Whether or not the console is being masked.
+   	*/
       private volatile boolean stop;
-		/**
-		* Which <code> Character </code> the
-		* console is being masked with.
-		*/
+   	/**
+   	* Which <code> Character </code> the
+   	* console is being masked with.
+   	*/
       private char echochar = ' ';
    
    /**

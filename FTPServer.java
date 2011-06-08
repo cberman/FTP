@@ -4,9 +4,9 @@
    import java.io.*;
    import javax.swing.*;
    import java.util.*;
-	import java.security.*;
+   import java.security.*;
 
-    public class FTPServer extends Thread
+   public class FTPServer extends Thread
    {   
    
    /**
@@ -64,12 +64,21 @@
    	* Whether or not this server is secured with a password.
    	*/
       public boolean hasPass=false;
+   	/**
+   	* Generates SHA-1 checksums
+   	*/
+      public MessageDigest md;
+   	/**
+   	* Whether or not to use checksums
+   	*/
+      public boolean checksum;
       
    	/**
    	* Create a new server and instantiate various variables
    	*/
-       public FTPServer() throws IOException
+      public FTPServer() throws IOException
       {
+         boolean hasCheck=false;
          String os=System.getProperty("os.name");
          System.out.println("OS detected as "+os);
          System.out.println("IP detected as "+InetAddress.getLocalHost().getHostAddress());
@@ -82,18 +91,18 @@
          {
             System.out.println("server.cfg not found");
             try{out=new PrintStream(new FileOutputStream("server.cfg", true));}
-                catch(Exception e){e.printStackTrace(); System.exit(1);}
+               catch(Exception e){e.printStackTrace(); System.exit(1);}
             System.out.println("server.cfg created successfully");
          }
          else
          {
             try{out=new PrintStream(new FileOutputStream("server.cfg", true));}
-                catch(Exception e){e.printStackTrace(); System.exit(1);}
+               catch(Exception e){e.printStackTrace(); System.exit(1);}
             System.out.println("server.cfg successfully loaded");
          }
          BufferedReader f=null;
          try{f=new BufferedReader(new FileReader("server.cfg"));}
-             catch(Exception e){
+            catch(Exception e){
                e.printStackTrace();
                System.exit(1);}
          StringTokenizer st;
@@ -129,6 +138,14 @@
             }
             else if(header.equalsIgnoreCase("PORT:"))
                port=Integer.parseInt(st.nextToken());
+            else if(header.equalsIgnoreCase("CHECKSUM:"))
+            {
+               hasCheck=true;
+               if(st.nextToken().equalsIgnoreCase("NO"))
+                  checksum=false;
+               else
+                  checksum=true;
+            }
          }
          if(maxConnections==-1)
          {
@@ -184,18 +201,24 @@
             port=5000;
             out.println("PORT: 5000");
          }
+         if(!hasCheck)
+         {
+            System.out.println("Header CHECKSUM not found; Checkum use set to YES");
+            checksum=true;
+            out.println("CHECKSUM: YES");
+         }
       	
          users = new User[ maxConnections ];
       
          try {
             server = new ServerSocket( port, 2 );
          }
-             catch(BindException e)
+            catch(BindException e)
             {
                System.out.println("Something is already being run on this port.");
                System.exit(1);
             }
-             catch( IOException e ) {
+            catch( IOException e ) {
                e.printStackTrace();
                System.exit( 1 );
             }
@@ -206,31 +229,34 @@
             pass = PasswordField.getPassword(System.in, 
                "Enter a password for the server (hit ENTER for no password): ");
          } 
-             catch(IOException e){e.printStackTrace();}
+            catch(IOException e){e.printStackTrace();}
          System.out.print("\n\r");	//carriage return
          if(pass!=null)
             hasPass=true;
+         if(checksum)
+            try{md=MessageDigest.getInstance("SHA-1");}
+               catch(NoSuchAlgorithmException e){e.printStackTrace();}
       }
    	
    	/**
    	* Constantly checks for new connections and accepts them.
    	*/
-       public void run()
+      public void run()
       {
          while(true)
          {
             for ( int i = 0; i < users.length; i++ ) 
             {
                try{this.sleep(5000);}
-                   catch(InterruptedException e){e.printStackTrace();}
+                  catch(InterruptedException e){e.printStackTrace();}
                if(users[i]==null)
                {
                   try {
                      users[ i ] = new User( server.accept(), this);
                      users[ i ].start();
                   }
-                      catch(SocketTimeoutException e){}
-                      catch( IOException e ) {
+                     catch(SocketTimeoutException e){}
+                     catch( IOException e ) {
                         e.printStackTrace();
                         System.exit( 1 );
                      }
@@ -240,7 +266,7 @@
                      display(users[i].IP+" has disconnected.");
                      users[i]=null;
                   }
-                      catch(Exception e){
+                     catch(Exception e){
                         e.printStackTrace();
                         System.exit(1);}}
             }
@@ -251,7 +277,7 @@
    	
    	* @param s The message to be displayed
    	*/
-       public void display( String s ) throws IOException
+      public void display( String s ) throws IOException
       {
          System.out.println(s);
       }
@@ -262,7 +288,7 @@
    	* @param p The client that sent the command
    	* @param text The message sent by the client
    	*/
-       public void interpret(User p, String text) throws IOException
+      public void interpret(User p, String text) throws IOException
       {
          String[] word=text.split("[ \t\n\f\r]");
          if(word[0].equalsIgnoreCase("noop"))
@@ -309,7 +335,7 @@
    	* @param p The client that requested the list
    	* @param word The exact message sent by the client
    	*/
-       public void list(User p, String[] word) throws IOException
+      public void list(User p, String[] word) throws IOException
       {
          String[] files=null;
          File dir=null;
@@ -350,7 +376,7 @@
    	* @param p The client that requested the list
    	* @param word The exact message sent by the client
    	*/
-       public void flist(User p, String[] word) throws IOException
+      public void flist(User p, String[] word) throws IOException
       {
          File[] files=null;
          File dir=null;
@@ -391,7 +417,7 @@
    	* @param p The client that requested the list
    	* @param word The exact message sent by the client
    	*/
-       public void dlist(User p, String[] word) throws IOException
+      public void dlist(User p, String[] word) throws IOException
       {
          File[] files=null;
          File dir=null;
@@ -431,7 +457,7 @@
    	
    	* @param p The client that requested the directory change
    	*/
-       public void cdup(User p) throws IOException
+      public void cdup(User p) throws IOException
       {
          String[] word=new String[2];
          word[0]="cwd";
@@ -444,7 +470,7 @@
    	* @param p The client that requested the directory change
    	* @param word The exact message sent by the client
    	*/
-       public void cwd(User p, String[] word) throws IOException
+      public void cwd(User p, String[] word) throws IOException
       {
          if(word.length==1)
             p.path=new File(defaultPath);
@@ -477,7 +503,7 @@
    	* @param p The client that requested the file size
    	* @param word The exact message sent by the client
    	*/
-       public String size(User p, String[] word) throws IOException
+      public String size(User p, String[] word) throws IOException
       {
          if(word.length==1)
          {
@@ -537,9 +563,9 @@
                   for(File i:file.listFiles())
                      q.offer(i);
                }
-                   catch(NullPointerException e){
+                  catch(NullPointerException e){
                      try{p.output.writeUTF("Access to "+file.getName()+" denied");}
-                         catch(SocketException ex){p.disconnected=true;}}
+                        catch(SocketException ex){p.disconnected=true;}}
             else
                sum+=file.length();
          }
@@ -551,7 +577,7 @@
    	* @param p The client that requested the file
    	* @param word The exact message sent by the client
    	*/
-       public void retr(User p, String[] word) throws IOException
+      public void retr(User p, String[] word) throws IOException
       {
          if(word.length==1)
             p.output.writeUTF(word[0]+" requires a filename argument");
@@ -575,20 +601,26 @@
    	* @param p The client that requested the file
    	* @param path The path of the file requested by the client
    	*/
-       public void sendFile(User p, File file, String name) throws IOException
+      public void sendFile(User p, File file, String name) throws IOException
       {
          byte[] array=new byte[0];
          boolean tooBig=false;
          try{array=new byte[(int)file.length()];}
-             catch(OutOfMemoryError e){tooBig=true;}
+            catch(OutOfMemoryError e){tooBig=true;}
          if(tooBig||(long)array.length!=file.length())
             p.output.writeUTF("File too big to transfer");
          else
          {
-            new BufferedInputStream(new FileInputStream(file)).read(array, 0, array.length);
-            p.output.writeUTF("<FILE>"+name+":"+array.length);
-            p.output.write(array, 0, array.length);
-            p.output.flush();
+            do
+            {
+               new BufferedInputStream(new FileInputStream(file)).read(array, 0, array.length);
+               p.output.writeUTF("<FILE>"+name+":"+array.length);
+               p.output.write(array, 0, array.length);
+               p.output.flush();
+               byte[] sha1hash = md.digest(array);
+               p.output.write(sha1hash, 0, sha1hash.length);
+               p.output.flush();
+            } while(!p.input.readBoolean());
          }
       }
    	/**
@@ -597,7 +629,7 @@
    	* @param p The client that requested the file removal
    	* @param word The exact message sent by the client
    	*/
-       public void rm(User p, String[] word) throws IOException
+      public void rm(User p, String[] word) throws IOException
       {
          if(word.length==1)
             p.output.writeUTF(word[0]+" requires a filename argument");
@@ -622,7 +654,7 @@
    	* @param p The client that requested the date
    	* @param word The exact message sent by the client
    	*/
-       public void mdtm(User p, String[] word) throws IOException
+      public void mdtm(User p, String[] word) throws IOException
       {
          if(word.length==1)
             p.output.writeUTF(word[0]+" requires a filename argument");
@@ -645,7 +677,7 @@
    	* @param p The client that requested the date
    	* @param word The exact message sent by the client
    	*/
-       public void mget(User p, String[] word) throws IOException
+      public void mget(User p, String[] word) throws IOException
       {
          if(word.length==1)
             p.output.writeUTF(word[0]+" requires an argument");
@@ -659,14 +691,14 @@
                   sendFile(p, i, i.getName());
          }
       }
-		/**
-		* Used by <code> mget </code> to determine if
-		* a specific file should be sent.
-		
-		* @param regex The regular expression.
-		* @param name The name of the file
-		*/
-       public boolean matches(String regex, String name)
+   	/**
+   	* Used by <code> mget </code> to determine if
+   	* a specific file should be sent.
+   	
+   	* @param regex The regular expression.
+   	* @param name The name of the file
+   	*/
+      public boolean matches(String regex, String name)
       {
          for(int i=0; i<regex.length(); i++)
          {
@@ -693,7 +725,7 @@
    	* @param p The client that requested the date
    	* @param word The exact message sent by the client
    	*/
-       public void fget(User p, String[] word) throws IOException
+      public void fget(User p, String[] word) throws IOException
       {
          if(word.length==1)
             p.output.writeUTF(word[0]+" requires a filename argument");
@@ -730,7 +762,7 @@
    	/**
    	* Hashes a password
    	*/
-       public String hash(char[] ___)
+      public String hash(char[] ___)
       {
          String ____="";
          long _____=0, _______=___.length, __=2, ______=524287;
@@ -748,14 +780,14 @@
    	
    	* @param hash The hashed password from the client
    	*/
-       public boolean isPass(String hash)
+      public boolean isPass(String hash)
       {
          return hash.equals(hash(pass));
       }
    	/**
    	* Creates a new server and starts the required <code> Thread</code>s
    	*/
-       public static void main( String args[] ) throws IOException
+      public static void main( String args[] ) throws IOException
       {
          FTPServer server = new FTPServer();
          System.out.println("Server up and running");
@@ -767,7 +799,7 @@
 	/**
 	* <code> Class </code> maintaining information on each client
 	*/
-    class User extends Thread 
+   class User extends Thread 
    {
    	/**
    	* The place the connection between the client
@@ -777,7 +809,7 @@
    	/**
    	* <code> Stream </code> reading from the client
    	*/
-      private DataInputStream input;
+      public DataInputStream input;
    	/**
    	* <code> Stream </code> writing to the client
    	*/
@@ -805,14 +837,14 @@
    	* @param socket The place the connection is made
    	* @param server The host server
    	*/
-       public User( Socket socket, FTPServer server)
+      public User( Socket socket, FTPServer server)
       {
          connection = socket;
          try {
             input = new DataInputStream(connection.getInputStream());
             output = new DataOutputStream(connection.getOutputStream());
          }
-             catch( IOException e ) {
+            catch( IOException e ) {
                e.printStackTrace();
                System.exit( 1 );
             }
@@ -825,7 +857,7 @@
    	* Reads in requests from the client and
    	* sends them to the server for interpretation.
    	*/
-       public void run()
+      public void run()
       {
          try {
             IP=connection.getInetAddress().getHostAddress();
@@ -842,6 +874,7 @@
                else
                   output.writeBoolean(false);
             }
+            output.writeBoolean(control.checksum);
             output.writeUTF(control.welcome);
             output.writeUTF("<EOF>"+path.getPath());
          	
@@ -850,10 +883,10 @@
                String text="";
                try{
                   text = input.readUTF();}
-                   catch(EOFException e){
+                  catch(EOFException e){
                      disconnected=true;
                      break;}
-                   catch(SocketException e){
+                  catch(SocketException e){
                      disconnected=true;
                      break;}
             
@@ -861,7 +894,7 @@
             }         
          
          }
-             catch( Exception e ) {
+            catch( Exception e ) {
                e.printStackTrace();
             }
       }
@@ -870,7 +903,7 @@
    * This <code> Class </code> attempts to erase characters echoed to the console.
    */
 
-    class MaskingThread extends Thread 
+   class MaskingThread extends Thread 
    {
    	/**
    	* Whether or not the console is being masked.
@@ -887,7 +920,7 @@
    
    *@param prompt The prompt displayed to the user
    */
-       public MaskingThread(String prompt) 
+      public MaskingThread(String prompt) 
       {
          System.out.print(prompt);
       }
@@ -895,7 +928,7 @@
    /**
    * Begin masking until asked to stop.
    */
-       public void run() 
+      public void run() 
       {
       
          int priority = Thread.currentThread().getPriority();
@@ -910,7 +943,7 @@
                // attempt masking at this rate
                   Thread.currentThread().sleep(1);
                }
-                   catch (InterruptedException iex) {
+                  catch (InterruptedException iex) {
                      Thread.currentThread().interrupt();
                      return;
                   }
@@ -924,7 +957,7 @@
    /**
    * Instruct the <code> Thread </code> to stop masking.
    */
-       public void stopMasking() 
+      public void stopMasking() 
       {
          this.stop = false;
       }
@@ -935,7 +968,7 @@
  * and attempts to mask input with blank spaces
  */
 
-    class PasswordField 
+   class PasswordField 
    {
    
    /**
@@ -946,7 +979,7 @@
    *@return The password as entered by the user.
    */
    
-       public static final char[] getPassword(InputStream in, String prompt) throws IOException {
+      public static final char[] getPassword(InputStream in, String prompt) throws IOException {
          MaskingThread maskingthread = new MaskingThread(prompt);
          Thread thread = new Thread(maskingthread);
          thread.start();
@@ -1008,17 +1041,17 @@
 	* Test <code> Class </code> used to run a
 	* server and a client at the same time.
 	*/
-    class Client extends Thread
+   class Client extends Thread
    {
    	/**
    	* Starts a new <code> FTPClient </code> running.
    	*/
-       public void run()
+      public void run()
       {
          String[] args={};
          try
          {FTPClient.main(args);}
-             catch(IOException e){
+            catch(IOException e){
                e.printStackTrace();}
       }
    }
