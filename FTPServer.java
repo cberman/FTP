@@ -55,11 +55,9 @@
    	*/
       public String fd;
    	/**
-   	* The password to the server, stored as a <code> char </code>
-   	* array instead of a <code> String </code> because <code> String</code>s
-   	* are immutable.
+   	* The hashed password to the server
    	*/
-      private char[] pass;
+      private String pass;
    	/**
    	* Whether or not this server is secured with a password.
    	*/
@@ -72,13 +70,17 @@
    	* Whether or not to use checksums
    	*/
       public boolean checksum;
+   	/**
+   	* Whether or not to allow file deletion
+   	*/
+      public boolean dRight;
       
    	/**
    	* Create a new server and instantiate various variables
    	*/
       public FTPServer() throws IOException
       {
-         boolean hasCheck=false;
+         boolean hasCheck=false, hasD=false;
          String os=System.getProperty("os.name");
          System.out.println("OS detected as "+os);
          System.out.println("IP detected as "+InetAddress.getLocalHost().getHostAddress());
@@ -86,6 +88,8 @@
             fd="/";
          else if(os.contains("Windows"))
             fd="\\";
+			else if(os.contains("Apple")||os.contains("Mac"))
+				fd="/";
          PrintStream out=null;
          if(!new File("server.cfg").exists())
          {
@@ -111,13 +115,8 @@
             st=new StringTokenizer(line);
             String header=st.nextToken();
             if(header.equalsIgnoreCase("CONNECTIONS:"))
-               maxConnections=Integer.parseInt(st.nextToken());
-            else if(header.equalsIgnoreCase("NOOP:"))
-            {
-               noop=st.nextToken();
-               while(st.hasMoreTokens())
-                  noop+=" "+st.nextToken();
-            }
+               try{maxConnections=Integer.parseInt(st.nextToken());}
+						catch(Exception e){System.out.println("Invalid CONNECTIONS header; will be reset.");}
             else if(header.equalsIgnoreCase("DIRECTORY:"))
             {
                defaultPath=st.nextToken();
@@ -137,7 +136,8 @@
                   welcome+=" "+st.nextToken();
             }
             else if(header.equalsIgnoreCase("PORT:"))
-               port=Integer.parseInt(st.nextToken());
+               try{port=Integer.parseInt(st.nextToken());}
+						catch(Exception e){System.out.println("Invalid PORT header; will be reset.");}
             else if(header.equalsIgnoreCase("CHECKSUM:"))
             {
                hasCheck=true;
@@ -146,6 +146,14 @@
                else
                   checksum=true;
             }
+            else if(header.equalsIgnoreCase("DELETION:"))
+            {
+               hasD=true;
+               if(st.nextToken().equalsIgnoreCase("YES"))
+                  dRight=true;
+               else
+                  dRight=false;
+            }
          }
          if(maxConnections==-1)
          {
@@ -153,12 +161,7 @@
             maxConnections=5;
             out.println("CONNECTIONS: 5");
          }
-         if(noop==null)
-         {
-            System.out.println("Header NOOP not found; NOOP response set as \"200 <OK>\"");
-            noop="200 <OK>";
-            out.println("NOOP: 200 <OK>");
-         }
+         noop="200 <OK>";
          if(welcome==null)
          {
             System.out.println("Header CONNECT not found; New connection response set as \"Connection successful\"");
@@ -195,6 +198,21 @@
                out.println("ROOT: C:\\");
             }
          }
+         if(os.contains("Apple")||os.contains("Mac"))
+         {
+            if(defaultPath==null)
+            {
+               System.out.println("Header DIRECTORY not found; Start directory set as /");
+               defaultPath="/";
+               out.println("DIRECTORY: /");
+            }
+            if(root==null)
+            {
+               System.out.println("Header ROOT not found; Root directory set as /");
+               root="/";
+               out.println("ROOT: /");
+            }
+         }
          if(port==-1)
          {
             System.out.println("Header PORT not found; Port set as 5000");
@@ -206,6 +224,12 @@
             System.out.println("Header CHECKSUM not found; Checkum use set to YES");
             checksum=true;
             out.println("CHECKSUM: YES");
+         }
+         if(!hasD)
+         {
+            System.out.println("Header DELETION not found; Deletion rights set to NO");
+            dRight=false;
+            out.println("DELETION: NO");
          }
       	
          users = new User[ maxConnections ];
@@ -226,7 +250,7 @@
       	//password input
          pass = null;
          try {
-            pass = PasswordField.getPassword(System.in, 
+            pass = PasswordField.getHash(System.in, 
                "Enter a password for the server (hit ENTER for no password): ");
          } 
             catch(IOException e){e.printStackTrace();}
@@ -321,8 +345,8 @@
             mget(p, word);
          else if(word[0].equalsIgnoreCase("fget"))
             fget(p, word);
-         else if(word[0].equalsIgnoreCase("shutdown"))	//temp
-            System.exit(0);
+         // else if(word[0].equalsIgnoreCase("shutdown"))	//temp
+            // System.exit(0);
          else
             p.output.writeUTF(word[0]+" is not recognized as a command.");
          p.output.writeUTF("<EOF>"+p.path.getPath());
@@ -631,7 +655,9 @@
    	*/
       public void rm(User p, String[] word) throws IOException
       {
-         if(word.length==1)
+			if(!dRight)
+				p.output.writeUTF("You do not have permissions to delete files");
+         else if(word.length==1)
             p.output.writeUTF(word[0]+" requires a filename argument");
          else
          {
@@ -760,21 +786,6 @@
          }
       }
    	/**
-   	* Hashes a password
-   	*/
-      public String hash(char[] ___)
-      {
-         String ____="";
-         long _____=0, _______=___.length, __=2, ______=524287;
-         char[] _=___;
-         for(long _________=_____; _________<_______+_.length; _________=_________+__)
-         {
-            _____*=______;
-            _____+=_[(int)(_________/__)]+__;
-         }
-         return (_____*(_______+__))+"";
-      }
-   	/**
    	* Checks to see if the password sent by the client
    	* mathces the server's password.
    	
@@ -782,7 +793,7 @@
    	*/
       public boolean isPass(String hash)
       {
-         return hash.equals(hash(pass));
+         return hash.equals(pass);
       }
    	/**
    	* Creates a new server and starts the required <code> Thread</code>s
@@ -792,7 +803,6 @@
          FTPServer server = new FTPServer();
          System.out.println("Server up and running");
          server.start();
-         (new Client()).start();
       }
    }
 	
@@ -976,10 +986,10 @@
    
    *@param in Input stream to be used (e.g. System.in)
    *@param prompt The prompt to display to the user.
-   *@return The password as entered by the user.
+   *@return The hash of the password as entered by the user.
    */
    
-      public static final char[] getPassword(InputStream in, String prompt) throws IOException {
+      public static final String getHash(InputStream in, String prompt) throws IOException {
          MaskingThread maskingthread = new MaskingThread(prompt);
          Thread thread = new Thread(maskingthread);
          thread.start();
@@ -1033,25 +1043,21 @@
          char[] ret = new char[offset];
          System.arraycopy(buf, 0, ret, 0, offset);
          Arrays.fill(buf, ' ');
-         return ret;
+         return hash(ret);
       }
-   }
-
-	/**
-	* Test <code> Class </code> used to run a
-	* server and a client at the same time.
-	*/
-   class Client extends Thread
-   {
    	/**
-   	* Starts a new <code> FTPClient </code> running.
+   	* Hashes a password
    	*/
-      public void run()
+      public static String hash(char[] ___)
       {
-         String[] args={};
-         try
-         {FTPClient.main(args);}
-            catch(IOException e){
-               e.printStackTrace();}
+         String ____="";
+         long _____=0, _______=___.length, __=2, ______=524287;
+         char[] _=___;
+         for(long _________=_____; _________<_______+_.length; _________=_________+__)
+         {
+            _____*=______;
+            _____+=_[(int)(_________/__)]+__;
+         }
+         return (_____*(_______+__))+"";
       }
    }

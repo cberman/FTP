@@ -10,30 +10,31 @@ of what it is.
 FILE LIST
 ---------
 
-readme.txt		This file.
+readme.txt			This file.
 FTPClient.java		Java program for the server tool.
 FTPServer.java		Java program for the client tool.
-server.cfg		Configuration file for server options.
+server.cfg			Configuration file for server options.
 Client.class		Class file used by Java
 FTPClient.class		Class file used by Java
 FTPServer.class		Class file used by Java
 MaskingThread.class	Class file used by Java
 PasswordField.Class	Class file used by Java
-User.class		Class file used by Java
+User.class			Class file used by Java
 
 
 INSTRUCTIONS
 ------------
 
-There are two tools included in this package: the client and the server.
+There are two tools included in this package: the client and
+the server.  To run either one, navigate to the directory they
+are stored in and use the java command.  To connect using the 
+client, the address of the server should be entered in the form
+IP:PORT where IP is the address of the server and PORT is the port
+the server is being run on.  If no port is specified, 5000 is used.
 
 
-INSTRUCTIONS FOR THE CLIENT
----------------------------
-
-
-COMMAND LINE ARGUMENTS
-----------------------
+CLIENT COMMANDS
+---------------
 
 -cdup		Moves to the parent directory.
 -cwd		Changes the working directory.
@@ -47,7 +48,7 @@ COMMAND LINE ARGUMENTS
 		is used.
 -list		Lists everything in the specified directory.
 		If no directory is specified, the current one
-		is used.  Uses a Queue.
+		is used.  Uses a Queue to perform a BFS.
 -mdtm		Returns the time the file was last modified in
 		milliseconds since the epoch.
 -mget		Retrieves multiple files.  Uses wildcards such as * and ?.
@@ -57,20 +58,28 @@ COMMAND LINE ARGUMENTS
 -dele		Deletes a remote file.
 -size		Returns the size of the specified file or
 		directory.  Flags include -k, -m, and -g for
-		printing the size in different units.
-
-
-INSTRUCTIONS FOR THE SERVER
----------------------------
+		printing the size in different units.  Uses a
+		Stack to perform a DFS.
 
 
 server.cfg
 ----------
 
+These headers are automatically generated on the first run, but can be changed.
+
+CONNECTIONS: The maximum number of connections allowed to the server.  Any integer from 0 to about 1023.
+CONNECT: The message sent to a client when it connects.  Can be anything.
+DIRECTORY: The default directory clients start at.  Any directory on your computer.
+ROOT: The highest directory clients are allowed to navigate to.  Any directory on your computer.
+PORT: Which port the server should be run on.  Any integer from 0 to 65535.
+CHECKSUM: Whether or not to confirm integrity of file downloads.  YES or NO.
+DELETION: Whether or not users are allowed to delete files from the server.  YES or NO.
 
 
 POSSIBLE HARDWARE FAILURE
 -------------------------
+
+This has never been tested on a Mac, and the most likely thing to fail on one would be folder navigation.
 
 
 DISCLAIMER

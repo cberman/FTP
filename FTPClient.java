@@ -46,6 +46,8 @@
          try{hostname=stuff.substring(0, stuff.indexOf(":"));
             port=Integer.parseInt(stuff.substring(stuff.indexOf(":")+1));}
             catch(StringIndexOutOfBoundsException e){hostname=stuff;}
+            catch(NumberFormatException e){System.out.println(
+                  "Invalid port number."); System.exit(0);}
          (new FTPClient()).gogogo(hostname, port);
       }
    /**
