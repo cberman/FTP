@@ -39,6 +39,8 @@
    	*/
       public static void main(String[] args) throws IOException
       {
+			if(new File("Downloads").mkdir())
+				System.out.println("Downloads folder created.");
          System.out.print("Connect to: ");
          String stuff=new Scanner(System.in).next();
          String hostname=null;

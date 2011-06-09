@@ -27,10 +27,15 @@ INSTRUCTIONS
 
 There are two tools included in this package: the client and
 the server.  To run either one, navigate to the directory they
-are stored in and use the java command.  To connect using the 
-client, the address of the server should be entered in the form
-IP:PORT where IP is the address of the server and PORT is the port
-the server is being run on.  If no port is specified, 5000 is used.
+are stored in and use the java command.  
+To connect using the client, the address of the server should be 
+entered in the form IP:PORT where IP is the address of the server 
+and PORT is the port the server is being run on.  If no port is 
+specified, 5000 is used.  The commands listed below are then used
+to download files.  All files retrieved will be placed in a new
+Downloads folder.
+The server requires no active participation to run.  It prints to
+standard out all IP addresses that connect.
 
 
 CLIENT COMMANDS
