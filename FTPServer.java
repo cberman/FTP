@@ -638,7 +638,7 @@
             do
             {
                new BufferedInputStream(new FileInputStream(file)).read(array, 0, array.length);
-               p.output.writeUTF("<FILE>"+name+":"+array.length);
+               p.output.writeUTF("<FILE>"+"Downloads"+fd+name+":"+array.length);
                p.output.write(array, 0, array.length);
                p.output.flush();
                byte[] sha1hash = md.digest(array);
@@ -775,7 +775,7 @@
                   file=stack.pop();
                   if(file.isDirectory())
                   {
-                     p.output.writeUTF("<FOLDER>"+file.getPath().substring(start));
+                     p.output.writeUTF("<FOLDER>"+"Downloads"+fd+file.getPath().substring(start));
                      for(File i:file.listFiles())
                         stack.push(i);
                   }
