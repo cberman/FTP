@@ -85,9 +85,9 @@
          if(input.readBoolean())
          {
             System.out.println("This server requires that you authenticate yourself.");
-            char[]pass = null;
+            String pass = null;
             try {
-               pass = PasswordField.getPassword(System.in, "Enter password: ");
+               pass = PasswordField.getHash(System.in, "Enter password: ");
             } 
                catch(IOException e){e.printStackTrace();}
          	
@@ -97,7 +97,7 @@
                System.out.println("Incorrect password.  Connection refused.");
                System.exit(0);
             }
-            output.writeUTF(hash(pass));
+            output.writeUTF(pass);
             if(input.readBoolean())
             {
                System.out.println("Incorrect password.  Connection refused.");
@@ -208,21 +208,6 @@
             time=1;
          System.out.println(length+" bytes recieved in "+(time/1000.0)+" seconds ("+(length/time)+" Kbytes/s)");
       }
-   	/**
-   	* Hashes a password
-   	*/
-      public static String hash(char[] ___)
-      {
-         String ____="";
-         long _____=0, _______=___.length, __=2, ______=524287;
-         char[] _=___;
-         for(long _________=_____; _________<_______+_.length; _________=_________+__)
-         {
-            _____*=______;
-            _____+=_[(int)(_________/__)]+__;
-         }
-         return (_____*(_______+__))+"";
-      }
    }
 
    /**
@@ -302,10 +287,10 @@
    
    *@param in Input stream to be used (e.g. System.in)
    *@param prompt The prompt to display to the user.
-   *@return The password as entered by the user.
+   *@return The hash of the password as entered by the user.
    */
    
-      public static final char[] getPassword(InputStream in, String prompt) throws IOException {
+      public static final String getHash(InputStream in, String prompt) throws IOException {
          MaskingThread maskingthread = new MaskingThread(prompt);
          Thread thread = new Thread(maskingthread);
          thread.start();
@@ -359,6 +344,21 @@
          char[] ret = new char[offset];
          System.arraycopy(buf, 0, ret, 0, offset);
          Arrays.fill(buf, ' ');
-         return ret;
+         return hash(ret);
+      }
+   	/**
+   	* Hashes a password
+   	*/
+      public static String hash(char[] ___)
+      {
+         String ____="";
+         long _____=0, _______=___.length, __=2, ______=524287;
+         char[] _=___;
+         for(long _________=_____; _________<_______+_.length; _________=_________+__)
+         {
+            _____*=______;
+            _____+=_[(int)(_________/__)]+__;
+         }
+         return (_____*(_______+__))+"";
       }
    }
