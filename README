@@ -10,16 +10,10 @@ of what it is.
 FILE LIST
 ---------
 
-readme.txt			This file.
+README  		This file.
 FTPClient.java		Java program for the server tool.
 FTPServer.java		Java program for the client tool.
-server.cfg			Configuration file for server options.
-Client.class		Class file used by Java
-FTPClient.class		Class file used by Java
-FTPServer.class		Class file used by Java
-MaskingThread.class	Class file used by Java
-PasswordField.Class	Class file used by Java
-User.class			Class file used by Java
+server.cfg		Configuration file for server options.
 
 
 INSTRUCTIONS
@@ -90,10 +84,7 @@ This has never been tested on a Mac, and the most likely thing to fail on one wo
 DISCLAIMER
 ----------
 
-THIS PROGRAM AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
-ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO
-THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
-PARTICULAR PURPOSE.
+THIS PROGRAM AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE.
 
 
 THANKS
